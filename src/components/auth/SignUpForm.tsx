@@ -1,24 +1,70 @@
-import { useState } from "react";
-import { Link } from "react-router";
-import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "../../icons";
+import { useState, type FormEvent } from "react";
+import { Link, useNavigate } from "react-router";
+import { EyeCloseIcon, EyeIcon } from "../../icons";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Checkbox from "../form/input/Checkbox";
+import AppModal from "../ui/modal/AppModal";
+import { useAuth } from "../../context/AuthContext";
+import { ApiError, apiRequest } from "../../lib/httpClient";
 
 export default function SignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [socialProvider, setSocialProvider] = useState<string | null>(null);
+  const [showSocialModal, setShowSocialModal] = useState(false);
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const handleSubmit = async (
+    event: FormEvent<HTMLFormElement>,
+  ): Promise<void> => {
+    event.preventDefault();
+
+    const formData = new FormData(event.currentTarget);
+    const username = (formData.get("username") || "").toString().trim();
+    const password = (formData.get("password") || "").toString();
+
+    if (!username || !password) {
+      setError("Username and password are required.");
+      return;
+    }
+
+    setError(null);
+    setSubmitting(true);
+
+    try {
+      const data = await apiRequest<{ token: string }>({
+        path: "/user",
+        method: "POST",
+        body: {
+          username,
+          password,
+        },
+      });
+
+      login({ username }, data.token);
+      navigate("/");
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.status === 409) {
+          setError("Username is already registered.");
+        } else if (err.status === 400) {
+          setError("Invalid data. Please check your input.");
+        } else {
+          setError("Failed to sign up. Please try again.");
+        }
+      } else {
+        setError("An unexpected error occurred.");
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
   return (
     <div className="flex flex-col flex-1 w-full overflow-y-auto lg:w-1/2 no-scrollbar">
-      <div className="w-full max-w-md mx-auto mb-5 sm:pt-10">
-        <Link
-          to="/"
-          className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-        >
-          <ChevronLeftIcon className="size-5" />
-          Back to dashboard
-        </Link>
-      </div>
       <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
         <div>
           <div className="mb-5 sm:mb-8">
@@ -26,12 +72,19 @@ export default function SignUpForm() {
               Sign Up
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Enter your email and password to sign up!
+              Enter your username and password to sign up!
             </p>
           </div>
           <div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5">
-              <button className="inline-flex items-center justify-center gap-3 py-3 text-sm font-normal text-gray-700 transition-colors bg-gray-100 rounded-lg px-7 hover:bg-gray-200 hover:text-gray-800 dark:bg-white/5 dark:text-white/90 dark:hover:bg-white/10">
+              <button
+                type="button"
+                onClick={() => {
+                  setSocialProvider("Google");
+                  setShowSocialModal(true);
+                }}
+                className="inline-flex items-center justify-center gap-3 py-3 text-sm font-normal text-gray-700 transition-colors bg-gray-100 rounded-lg px-7 hover:bg-gray-200 hover:text-gray-800 dark:bg-white/5 dark:text-white/90 dark:hover:bg-white/10"
+              >
                 <svg
                   width="20"
                   height="20"
@@ -58,7 +111,14 @@ export default function SignUpForm() {
                 </svg>
                 Sign up with Google
               </button>
-              <button className="inline-flex items-center justify-center gap-3 py-3 text-sm font-normal text-gray-700 transition-colors bg-gray-100 rounded-lg px-7 hover:bg-gray-200 hover:text-gray-800 dark:bg-white/5 dark:text-white/90 dark:hover:bg-white/10">
+              <button
+                type="button"
+                onClick={() => {
+                  setSocialProvider("X");
+                  setShowSocialModal(true);
+                }}
+                className="inline-flex items-center justify-center gap-3 py-3 text-sm font-normal text-gray-700 transition-colors bg-gray-100 rounded-lg px-7 hover:bg-gray-200 hover:text-gray-800 dark:bg-white/5 dark:text-white/90 dark:hover:bg-white/10"
+              >
                 <svg
                   width="21"
                   className="fill-current"
@@ -82,44 +142,18 @@ export default function SignUpForm() {
                 </span>
               </div>
             </div>
-            <form>
+            <form onSubmit={handleSubmit}>
               <div className="space-y-5">
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                  {/* <!-- First Name --> */}
-                  <div className="sm:col-span-1">
-                    <Label>
-                      First Name<span className="text-error-500">*</span>
-                    </Label>
-                    <Input
-                      type="text"
-                      id="fname"
-                      name="fname"
-                      placeholder="Enter your first name"
-                    />
-                  </div>
-                  {/* <!-- Last Name --> */}
-                  <div className="sm:col-span-1">
-                    <Label>
-                      Last Name<span className="text-error-500">*</span>
-                    </Label>
-                    <Input
-                      type="text"
-                      id="lname"
-                      name="lname"
-                      placeholder="Enter your last name"
-                    />
-                  </div>
-                </div>
-                {/* <!-- Email --> */}
                 <div>
                   <Label>
-                    Email<span className="text-error-500">*</span>
+                    Username<span className="text-error-500">*</span>
                   </Label>
                   <Input
-                    type="email"
-                    id="email"
-                    name="email"
-                    placeholder="Enter your email"
+                    type="text"
+                    id="username"
+                    name="username"
+                    autoComplete="username"
+                    placeholder="Enter your username"
                   />
                 </div>
                 {/* <!-- Password --> */}
@@ -131,6 +165,9 @@ export default function SignUpForm() {
                     <Input
                       placeholder="Enter your password"
                       type={showPassword ? "text" : "password"}
+                      id="password"
+                      name="password"
+                      autoComplete="new-password"
                     />
                     <span
                       onClick={() => setShowPassword(!showPassword)}
@@ -164,10 +201,17 @@ export default function SignUpForm() {
                 </div>
                 {/* <!-- Button --> */}
                 <div>
-                  <button className="flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600">
+                  <button
+                    type="submit"
+                    className="flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600 disabled:bg-brand-300 disabled:cursor-not-allowed"
+                    disabled={submitting}
+                  >
                     Sign Up
                   </button>
                 </div>
+                {error && (
+                  <p className="text-sm text-error-500">{error}</p>
+                )}
               </div>
             </form>
 
@@ -185,6 +229,13 @@ export default function SignUpForm() {
           </div>
         </div>
       </div>
+      <AppModal
+        open={showSocialModal}
+        onClose={() => setShowSocialModal(false)}
+        featureLabel={
+          socialProvider ? `Sign up with ${socialProvider}` : "Social sign up"
+        }
+      />
     </div>
   );
 }

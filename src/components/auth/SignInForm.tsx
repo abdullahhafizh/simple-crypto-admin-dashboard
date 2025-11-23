@@ -1,25 +1,67 @@
-import { useState } from "react";
-import { Link } from "react-router";
-import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "../../icons";
+import { useState, type FormEvent } from "react";
+import { Link, useNavigate } from "react-router";
+import { EyeCloseIcon, EyeIcon } from "../../icons";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Checkbox from "../form/input/Checkbox";
 import Button from "../ui/button/Button";
+import AppModal from "../ui/modal/AppModal";
+import { useAuth } from "../../context/AuthContext";
+import { ApiError, apiRequest } from "../../lib/httpClient";
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [comingSoonFeature, setComingSoonFeature] = useState<string | null>(
+    null,
+  );
+  const [showComingSoon, setShowComingSoon] = useState(false);
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const handleSubmit = async (
+    event: FormEvent<HTMLFormElement>,
+  ): Promise<void> => {
+    event.preventDefault();
+
+    if (!username || !password) {
+      setError("Username and password are required.");
+      return;
+    }
+
+    setError(null);
+    setSubmitting(true);
+
+    try {
+      const data = await apiRequest<{ token: string }>({
+        path: "/login",
+        method: "POST",
+        body: { username, password },
+      });
+
+      login({ username }, data.token);
+      navigate("/");
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.status === 400 || err.status === 401) {
+          setError("Incorrect username or password.");
+        } else {
+          setError("Failed to sign in. Please try again.");
+        }
+      } else {
+        setError("An unexpected error occurred.");
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="flex flex-col flex-1">
-      <div className="w-full max-w-md pt-10 mx-auto">
-        <Link
-          to="/"
-          className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-        >
-          <ChevronLeftIcon className="size-5" />
-          Back to dashboard
-        </Link>
-      </div>
       <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
         <div>
           <div className="mb-5 sm:mb-8">
@@ -32,7 +74,14 @@ export default function SignInForm() {
           </div>
           <div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5">
-              <button className="inline-flex items-center justify-center gap-3 py-3 text-sm font-normal text-gray-700 transition-colors bg-gray-100 rounded-lg px-7 hover:bg-gray-200 hover:text-gray-800 dark:bg-white/5 dark:text-white/90 dark:hover:bg-white/10">
+              <button
+                type="button"
+                onClick={() => {
+                  setComingSoonFeature("Sign in with Google");
+                  setShowComingSoon(true);
+                }}
+                className="inline-flex items-center justify-center gap-3 py-3 text-sm font-normal text-gray-700 transition-colors bg-gray-100 rounded-lg px-7 hover:bg-gray-200 hover:text-gray-800 dark:bg-white/5 dark:text-white/90 dark:hover:bg-white/10"
+              >
                 <svg
                   width="20"
                   height="20"
@@ -59,7 +108,14 @@ export default function SignInForm() {
                 </svg>
                 Sign in with Google
               </button>
-              <button className="inline-flex items-center justify-center gap-3 py-3 text-sm font-normal text-gray-700 transition-colors bg-gray-100 rounded-lg px-7 hover:bg-gray-200 hover:text-gray-800 dark:bg-white/5 dark:text-white/90 dark:hover:bg-white/10">
+              <button
+                type="button"
+                onClick={() => {
+                  setComingSoonFeature("Sign in with X");
+                  setShowComingSoon(true);
+                }}
+                className="inline-flex items-center justify-center gap-3 py-3 text-sm font-normal text-gray-700 transition-colors bg-gray-100 rounded-lg px-7 hover:bg-gray-200 hover:text-gray-800 dark:bg-white/5 dark:text-white/90 dark:hover:bg-white/10"
+              >
                 <svg
                   width="21"
                   className="fill-current"
@@ -83,13 +139,21 @@ export default function SignInForm() {
                 </span>
               </div>
             </div>
-            <form>
+            <form onSubmit={handleSubmit}>
               <div className="space-y-6">
                 <div>
                   <Label>
-                    Email <span className="text-error-500">*</span>{" "}
+                    Username <span className="text-error-500">*</span>{" "}
                   </Label>
-                  <Input placeholder="info@gmail.com" />
+                  <Input
+                    type="text"
+                    id="username"
+                    name="username"
+                    placeholder="Enter your username"
+                    value={username}
+                    autoComplete="username"
+                    onChange={(event) => setUsername(event.target.value)}
+                  />
                 </div>
                 <div>
                   <Label>
@@ -99,6 +163,11 @@ export default function SignInForm() {
                     <Input
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
+                      id="password"
+                      name="password"
+                      autoComplete="current-password"
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
                     />
                     <span
                       onClick={() => setShowPassword(!showPassword)}
@@ -119,18 +188,25 @@ export default function SignInForm() {
                       Keep me logged in
                     </span>
                   </div>
-                  <Link
-                    to="/reset-password"
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setComingSoonFeature("Forgot password");
+                      setShowComingSoon(true);
+                    }}
                     className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400"
                   >
                     Forgot password?
-                  </Link>
+                  </button>
                 </div>
                 <div>
-                  <Button className="w-full" size="sm">
+                  <Button className="w-full" size="sm" disabled={submitting}>
                     Sign in
                   </Button>
                 </div>
+                {error && (
+                  <p className="text-sm text-error-500">{error}</p>
+                )}
               </div>
             </form>
 
@@ -148,6 +224,11 @@ export default function SignInForm() {
           </div>
         </div>
       </div>
+      <AppModal
+        open={showComingSoon}
+        onClose={() => setShowComingSoon(false)}
+        featureLabel={comingSoonFeature ?? "This feature"}
+      />
     </div>
   );
 }

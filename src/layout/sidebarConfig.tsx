@@ -27,7 +27,7 @@ export const navItems: NavItem[] = [
   {
     icon: <BoxCubeIcon />,
     name: "Transactions",
-    path: "/dashboard/transactions",
+    path: "/transactions",
   },
   {
     icon: <CalenderIcon />,
