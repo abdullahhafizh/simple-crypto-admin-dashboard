@@ -18,6 +18,7 @@ import Blank from "./pages/Blank";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
+import Transactions from "./pages/Dashboard/Transactions";
 
 export default function App() {
   return (
@@ -28,6 +29,8 @@ export default function App() {
           {/* Dashboard Layout */}
           <Route element={<AppLayout />}>
             <Route index path="/" element={<Home />} />
+
+            <Route path="/dashboard/transactions" element={<Transactions />} />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />
@@ -54,6 +57,7 @@ export default function App() {
           </Route>
 
           {/* Auth Layout */}
+          <Route path="/login" element={<SignIn />} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
 
