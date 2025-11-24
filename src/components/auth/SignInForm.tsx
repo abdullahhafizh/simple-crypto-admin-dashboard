@@ -8,6 +8,7 @@ import Button from "../ui/button/Button";
 import AppModal from "../ui/modal/AppModal";
 import { useAuth } from "../../context/AuthContext";
 import { ApiError, apiRequest } from "../../lib/httpClient";
+import { API_ENDPOINTS } from "../../lib/apiEndpoints";
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -38,7 +39,7 @@ export default function SignInForm() {
 
     try {
       const data = await apiRequest<{ token: string }>({
-        path: "/login",
+        path: API_ENDPOINTS.login,
         method: "POST",
         body: { username, password },
       });

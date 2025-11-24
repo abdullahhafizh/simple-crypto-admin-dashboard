@@ -8,6 +8,8 @@ type AppModalProps = {
   title?: string;
   description?: string;
   footer?: ReactNode;
+  closeOnEsc?: boolean;
+  closeOnBackdrop?: boolean;
 };
 
 export default function AppModal({
@@ -17,19 +19,22 @@ export default function AppModal({
   title = "Coming soon",
   description,
   footer,
+  closeOnEsc = true,
+  closeOnBackdrop = true,
 }: AppModalProps) {
   const label = featureLabel ?? "This feature";
 
   const handleBackdropMouseDown = (
     event: MouseEvent<HTMLDivElement>,
   ): void => {
+    if (!closeOnBackdrop) return;
     if (event.target === event.currentTarget) {
       onClose();
     }
   };
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !closeOnEsc) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -42,11 +47,11 @@ export default function AppModal({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [open, onClose]);
+  }, [open, closeOnEsc, onClose]);
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/40 transition-opacity duration-300 ease-out ${
+      className={`fixed inset-0 z-[999999] flex items-center justify-center bg-black/40 transition-opacity duration-300 ease-out ${
         open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
       }`}
       onMouseDown={handleBackdropMouseDown}

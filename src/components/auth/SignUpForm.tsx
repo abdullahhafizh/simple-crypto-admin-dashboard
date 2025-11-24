@@ -7,6 +7,7 @@ import Checkbox from "../form/input/Checkbox";
 import AppModal from "../ui/modal/AppModal";
 import { useAuth } from "../../context/AuthContext";
 import { ApiError, apiRequest } from "../../lib/httpClient";
+import { API_ENDPOINTS } from "../../lib/apiEndpoints";
 
 export default function SignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -37,7 +38,7 @@ export default function SignUpForm() {
 
     try {
       const data = await apiRequest<{ token: string }>({
-        path: "/user",
+        path: API_ENDPOINTS.registerUser,
         method: "POST",
         body: {
           username,

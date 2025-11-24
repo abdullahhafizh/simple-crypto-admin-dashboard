@@ -29,6 +29,12 @@ export class ApiError extends Error {
   }
 }
 
+let unauthorizedHandler: (() => void) | null = null;
+
+export function registerUnauthorizedHandler(handler: (() => void) | null) {
+  unauthorizedHandler = handler;
+}
+
 export async function apiRequest<T>(options: ApiRequestOptions): Promise<T> {
   const { path, method = "GET", body, token, headers = {} } = options;
 
@@ -53,6 +59,15 @@ export async function apiRequest<T>(options: ApiRequestOptions): Promise<T> {
 
   if (!response.ok) {
     const bodyText = await response.text().catch(() => undefined);
+
+    if (response.status === 401 && token && unauthorizedHandler) {
+      try {
+        unauthorizedHandler();
+      } catch {
+        // ignore handler errors
+      }
+    }
+
     throw new ApiError(`API request failed with status ${response.status}`, {
       status: response.status,
       statusText: response.statusText,
