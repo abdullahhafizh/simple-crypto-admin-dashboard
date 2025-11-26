@@ -1,3 +1,5 @@
+import ky from "ky";
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -80,6 +82,8 @@ export function mapApiErrorToMessage(
 
 let unauthorizedHandler: (() => void) | null = null;
 
+const apiClient = ky.create({ throwHttpErrors: false });
+
 export function registerUnauthorizedHandler(handler: (() => void) | null) {
   unauthorizedHandler = handler;
 }
@@ -100,10 +104,10 @@ export async function apiRequest<T>(options: ApiRequestOptions): Promise<T> {
       : `Bearer ${token}`;
   }
 
-  const response = await fetch(url.toString(), {
+  const response = await apiClient(url.toString(), {
     method,
     headers: finalHeaders,
-    body: body != null ? JSON.stringify(body) : undefined,
+    json: body != null ? body : undefined,
   });
 
   if (!response.ok) {
