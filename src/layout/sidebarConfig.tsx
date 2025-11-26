@@ -1,6 +1,5 @@
 import type React from "react";
 import {
-  BoxCubeIcon,
   // CalenderIcon,
   GridIcon,
   // ListIcon,
@@ -10,7 +9,6 @@ import {
   // TableIcon,
   // UserCircleIcon,
   DollarLineIcon,
-  TableIcon,
 } from "../icons";
 
 export type NavItem = {
