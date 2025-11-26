@@ -2,10 +2,12 @@ import { useState } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { Link } from "react-router";
+import AppModal from "../ui/modal/AppModal";
 
 export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const [notifying, setNotifying] = useState(true);
+  const [showComingSoon, setShowComingSoon] = useState(false);
 
   function toggleDropdown() {
     setIsOpen(!isOpen);
@@ -16,8 +18,8 @@ export default function NotificationDropdown() {
   }
 
   const handleClick = () => {
-    toggleDropdown();
     setNotifying(false);
+    setShowComingSoon(true);
   };
   return (
     <div className="relative">
@@ -375,6 +377,11 @@ export default function NotificationDropdown() {
           View All Notifications
         </Link>
       </Dropdown>
+      <AppModal
+        open={showComingSoon}
+        onClose={() => setShowComingSoon(false)}
+        featureLabel="Notifications"
+      />
     </div>
   );
 }

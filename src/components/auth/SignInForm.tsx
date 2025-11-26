@@ -7,8 +7,9 @@ import Checkbox from "../form/input/Checkbox";
 import Button from "../ui/button/Button";
 import AppModal from "../ui/modal/AppModal";
 import { useAuth } from "../../context/AuthContext";
-import { ApiError, apiRequest } from "../../lib/httpClient";
+import { apiRequest, mapApiErrorToMessage } from "../../lib/httpClient";
 import { API_ENDPOINTS } from "../../lib/apiEndpoints";
+import { useToast } from "../common/ToastProvider";
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -23,6 +24,7 @@ export default function SignInForm() {
   const [showComingSoon, setShowComingSoon] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { showToast } = useToast();
 
   const handleSubmit = async (
     event: FormEvent<HTMLFormElement>,
@@ -30,7 +32,9 @@ export default function SignInForm() {
     event.preventDefault();
 
     if (!username || !password) {
-      setError("Username and password are required.");
+      const message = "Username and password are required.";
+      setError(message);
+      showToast(message, "error");
       return;
     }
 
@@ -47,15 +51,15 @@ export default function SignInForm() {
       login({ username }, data.token);
       navigate("/");
     } catch (err) {
-      if (err instanceof ApiError) {
-        if (err.status === 400 || err.status === 401) {
-          setError("Incorrect username or password.");
-        } else {
-          setError("Failed to sign in. Please try again.");
-        }
-      } else {
-        setError("An unexpected error occurred.");
-      }
+      const message = mapApiErrorToMessage(err, {
+        defaultMessage: "Failed to sign in. Please try again.",
+        badRequestMessage: "Incorrect username or password.",
+        unauthorizedMessage: "Incorrect username or password.",
+        serverErrorMessage:
+          "Server error while signing in. Please try again later.",
+      });
+      setError(message);
+      showToast(message, "error");
     } finally {
       setSubmitting(false);
     }
@@ -153,6 +157,7 @@ export default function SignInForm() {
                     placeholder="Enter your username"
                     value={username}
                     autoComplete="username"
+                    autoFocus
                     onChange={(event) => setUsername(event.target.value)}
                   />
                 </div>
@@ -202,7 +207,31 @@ export default function SignInForm() {
                 </div>
                 <div>
                   <Button className="w-full" size="sm" disabled={submitting}>
-                    Sign in
+                    <span className="inline-flex items-center justify-center gap-2">
+                      {submitting && (
+                        <svg
+                          className="h-4 w-4 animate-spin text-current"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            fill="none"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                          />
+                        </svg>
+                      )}
+                      <span>{submitting ? "Signing in..." : "Sign in"}</span>
+                    </span>
                   </Button>
                 </div>
                 {error && (

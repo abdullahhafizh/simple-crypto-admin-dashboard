@@ -17,6 +17,7 @@ import FormElements from "./pages/Forms/FormElements";
 import Blank from "./pages/Blank";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
+import { AppErrorBoundary } from "./components/common/AppErrorBoundary";
 import Home from "./pages/Dashboard/Home";
 import Transactions from "./pages/Dashboard/Transactions";
 import RequireAuth from "./components/auth/RequireAuth";
@@ -29,7 +30,13 @@ export default function App() {
         <Routes>
           {/* Protected Dashboard Layout */}
           <Route element={<RequireAuth />}>
-            <Route element={<AppLayout />}>
+            <Route
+              element={
+                <AppErrorBoundary>
+                  <AppLayout />
+                </AppErrorBoundary>
+              }
+            >
               <Route index path="/" element={<Home />} />
 
               <Route path="/transactions" element={<Transactions />} />

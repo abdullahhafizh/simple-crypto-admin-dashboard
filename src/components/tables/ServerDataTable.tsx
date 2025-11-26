@@ -9,6 +9,8 @@ import DataTableShell, {
 } from "./DataTableShell";
 import { useAuth } from "../../context/AuthContext";
 import { ApiError } from "../../lib/httpClient";
+import { useToast } from "../common/ToastProvider";
+import { useGlobalLoading } from "../common/GlobalLoadingProvider";
 
 export type ServerDataTableColumn<TData = unknown> = Omit<
   DataTableColumn<TData>,
@@ -121,12 +123,15 @@ export default function ServerDataTable<TData = unknown>({
   onResetFilters,
   deps,
 }: ServerDataTableProps<TData>) {
-  const [sortColumn, setSortColumn] = useState(0);
+  const [sortColumn, setSortColumn] = useState<number | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [filterState, setFilterState] = useState<Record<string, string>>({});
 
   const { token: authToken } = useAuth();
   const effectiveToken = token ?? authToken;
+
+  const { showToast } = useToast();
+  const { startLoading, stopLoading } = useGlobalLoading();
 
   const defaultMapErrorMessage = useCallback((err: unknown) => {
     if (err instanceof ApiError) {
@@ -241,7 +246,12 @@ export default function ServerDataTable<TData = unknown>({
   );
 
   const buildQueryOptions = useCallback(
-    ({ pageIndex: qPageIndex, pageSize: qPageSize }) => ({
+    (
+      {
+        pageIndex: qPageIndex,
+        pageSize: qPageSize,
+      }: { pageIndex: number; pageSize: number },
+    ) => ({
       start: qPageIndex * qPageSize,
       length: qPageSize,
       search,
@@ -275,6 +285,28 @@ export default function ServerDataTable<TData = unknown>({
   });
 
   useEffect(() => {
+    if (loading) {
+      startLoading();
+      return () => {
+        stopLoading();
+      };
+    }
+
+    return undefined;
+  }, [loading, startLoading, stopLoading]);
+
+  useEffect(() => {
+    if (!error) return;
+    if (typeof error !== "string") {
+      showToast("An unexpected error occurred while loading data.", "error");
+      return;
+    }
+    const message = error.trim();
+    if (!message) return;
+    showToast(message, "error");
+  }, [error, showToast]);
+
+  useEffect(() => {
     const hasDeps = filterDeps.length > 0 || userDeps.length > 0;
     if (!hasDeps) return;
     setPageIndex(0);
@@ -298,10 +330,19 @@ export default function ServerDataTable<TData = unknown>({
   const handleSort = (columnIndex: number) => {
     setPageIndex(0);
     setSortColumn((prevCol) => {
+      // 3-state toggle per column: asc -> desc -> none
       if (prevCol === columnIndex) {
-        setSortDir((prevDir) => (prevDir === "asc" ? "desc" : "asc"));
-        return prevCol;
+        if (sortDir === "asc") {
+          setSortDir("desc");
+          return columnIndex;
+        }
+
+        // Currently desc: clear sorting for this column
+        setSortDir("desc");
+        return null;
       }
+
+      // New column: start with ascending
       setSortDir("asc");
       return columnIndex;
     });
@@ -333,7 +374,7 @@ export default function ServerDataTable<TData = unknown>({
           return column;
         }
 
-        const isCurrent = index === sortColumn;
+        const isCurrent = sortColumn !== null && index === sortColumn;
 
         return {
           ...column,
@@ -367,6 +408,7 @@ export default function ServerDataTable<TData = unknown>({
       currentPage={currentPage}
       totalPages={totalPages}
       onPageChange={goToPage}
+      showRowNumber
     />
   );
 }

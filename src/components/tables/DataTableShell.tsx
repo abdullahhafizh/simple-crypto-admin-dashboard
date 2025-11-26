@@ -121,6 +121,7 @@ export interface DataTableShellProps<TData = unknown> {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  showRowNumber?: boolean;
 }
 
 export interface DebouncedSearchOptions {
@@ -157,7 +158,7 @@ export function useDebouncedSearch({
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [pendingSearch, minLength, delayMs, onCommit]);
+  }, [pendingSearch, minLength, delayMs]);
 
   const reset = () => {
     setSearch("");
@@ -221,8 +222,8 @@ export interface DataTablesQueryOptions {
   start: number;
   length: number;
   search?: string;
-  sortColumn: number;
-  sortDir: "asc" | "desc";
+  sortColumn?: number | null;
+  sortDir?: "asc" | "desc" | null;
   extraFilters?: Record<string, string | number | null | undefined>;
 }
 
@@ -254,8 +255,10 @@ export function buildDataTablesQueryParams({
     }
   }
 
-  params.set("order[0][column]", String(sortColumn));
-  params.set("order[0][dir]", sortDir);
+  if (typeof sortColumn === "number" && sortDir) {
+    params.set("order[0][column]", String(sortColumn));
+    params.set("order[0][dir]", sortDir);
+  }
 
   return params;
 }
@@ -266,7 +269,7 @@ export interface DataTablesApiResponse<TData> {
   recordsFiltered?: number;
 }
 
-export interface UseServerDataTableOptions<TData> {
+export interface UseServerDataTableOptions {
   endpoint: string;
   token?: string | null;
   pageSizeInitial?: number;
@@ -291,7 +294,7 @@ export interface UseServerDataTableResult<TData> {
 }
 
 export function useServerDataTable<TData>(
-  options: UseServerDataTableOptions<TData>,
+  options: UseServerDataTableOptions,
 ): UseServerDataTableResult<TData> {
   const {
     endpoint,
@@ -380,6 +383,7 @@ export function renderColumnFilter(
         className="h-8 w-full rounded-lg border border-gray-300 bg-transparent px-2 text-xs text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-2 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
         placeholder={config.placeholder}
         value={config.getValue()}
+        aria-busy={loading || undefined}
         onChange={(event) => config.setValue(event.target.value)}
       />
     );
@@ -390,6 +394,7 @@ export function renderColumnFilter(
       <select
         className="h-8 w-full rounded-lg border border-gray-300 bg-transparent px-2 text-xs text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-2 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800"
         value={config.getValue()}
+        aria-busy={loading || undefined}
         onChange={(event) => config.setValue(event.target.value)}
       >
         {config.options.map((option) => (
@@ -409,6 +414,7 @@ export function renderColumnFilter(
           className="h-8 w-full rounded-lg border border-gray-300 bg-transparent px-2 text-xs text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-2 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 sm:w-24"
           placeholder={config.minPlaceholder ?? "Min"}
           value={config.getMin()}
+          aria-busy={loading || undefined}
           onChange={(event) => config.setMin(event.target.value)}
         />
         <input
@@ -416,6 +422,7 @@ export function renderColumnFilter(
           className="h-8 w-full rounded-lg border border-gray-300 bg-transparent px-2 text-xs text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-2 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 sm:w-24"
           placeholder={config.maxPlaceholder ?? "Max"}
           value={config.getMax()}
+          aria-busy={loading || undefined}
           onChange={(event) => config.setMax(event.target.value)}
         />
       </div>
@@ -427,14 +434,17 @@ export function renderColumnFilter(
       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
         <input
           type="date"
-          className="h-8 w-full rounded-lg border border-gray-300 bg-transparent px-2 text-xs text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-2 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+          className="h-8 w-full rounded-lg border border-gray-300 bg-transparent px-2 text-xs text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-2 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 sm:w-28"
           value={config.getFrom()}
+          aria-busy={loading || undefined}
           onChange={(event) => config.setFrom(event.target.value)}
         />
+        <span className="text-xs text-gray-400">to</span>
         <input
           type="date"
-          className="h-8 w-full rounded-lg border border-gray-300 bg-transparent px-2 text-xs text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-2 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+          className="h-8 w-full rounded-lg border border-gray-300 bg-transparent px-2 text-xs text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-2 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 sm:w-28"
           value={config.getTo()}
+          aria-busy={loading || undefined}
           onChange={(event) => config.setTo(event.target.value)}
         />
       </div>
@@ -464,6 +474,7 @@ export default function DataTableShell<TData = unknown>({
   currentPage,
   totalPages,
   onPageChange,
+  showRowNumber = false,
 }: DataTableShellProps<TData>) {
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const pageSizes =
@@ -661,6 +672,14 @@ export default function DataTableShell<TData = unknown>({
             {/* Main header row */}
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
+                {showRowNumber && (
+                  <TableCell
+                    isHeader
+                    className="px-5 py-3 text-theme-xs text-right"
+                  >
+                    #
+                  </TableCell>
+                )}
                 {columns.map((column) => {
                   const alignClass =
                     column.align === "right"
@@ -741,6 +760,9 @@ export default function DataTableShell<TData = unknown>({
             {columns.some((column) => column.headerFilter || column.filterConfigHeader) && (
               <TableHeader>
                 <TableRow>
+                  {showRowNumber && (
+                    <TableCell className="px-5 py-2 text-theme-xs">{null}</TableCell>
+                  )}
                   {columns.map((column) => {
                     const alignClass =
                       column.align === "right"
@@ -771,6 +793,11 @@ export default function DataTableShell<TData = unknown>({
               {loading &&
                 Array.from({ length: pageSize }).map((_, rowIndex) => (
                   <TableRow key={`skeleton-${rowIndex}`}>
+                    {showRowNumber && (
+                      <TableCell className="px-5 py-4">
+                        <div className="h-4 bg-gray-200 rounded animate-pulse dark:bg-gray-700 w-full" />
+                      </TableCell>
+                    )}
                     {columns.map((column) => (
                       <TableCell key={column.id} className="px-5 py-4">
                         <div className="h-4 bg-gray-200 rounded animate-pulse dark:bg-gray-700 w-full" />
@@ -783,7 +810,7 @@ export default function DataTableShell<TData = unknown>({
               {!loading && error && (
                 <TableRow>
                   <TableCell
-                    colSpan={columns.length}
+                    colSpan={columns.length + (showRowNumber ? 1 : 0)}
                     className="px-5 py-6 text-center text-sm text-error-500"
                   >
                     {error}
@@ -795,7 +822,7 @@ export default function DataTableShell<TData = unknown>({
               {!loading && !error && data.length === 0 && (
                 <TableRow>
                   <TableCell
-                    colSpan={columns.length}
+                    colSpan={columns.length + (showRowNumber ? 1 : 0)}
                     className="px-5 py-6 text-center text-sm text-gray-500 dark:text-gray-400"
                   >
                     {emptyMessage}
@@ -812,6 +839,13 @@ export default function DataTableShell<TData = unknown>({
                       getRowKey ? getRowKey(row, rowIndex) : (rowIndex as number)
                     }
                   >
+                    {showRowNumber && (
+                      <TableCell className="px-5 py-4 text-sm text-gray-700 text-right dark:text-gray-200">
+                        {currentFrom && currentFrom > 0
+                          ? currentFrom + rowIndex
+                          : rowIndex + 1}
+                      </TableCell>
+                    )}
                     {columns.map((column) => {
                       const alignClass =
                         column.align === "right"
@@ -837,6 +871,9 @@ export default function DataTableShell<TData = unknown>({
             {columns.some((column) => column.footerFilter || column.filterConfigFooter) && (
               <TableFooter>
                 <TableRow>
+                  {showRowNumber && (
+                    <TableCell className="px-5 py-2 text-theme-xs">{null}</TableCell>
+                  )}
                   {columns.map((column) => {
                     const alignClass =
                       column.align === "right"

@@ -10,6 +10,7 @@ interface InputProps {
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   className?: string;
   autoComplete?: string;
+  autoFocus?: boolean;
   min?: string;
   max?: string;
   step?: number;
@@ -17,6 +18,7 @@ interface InputProps {
   success?: boolean;
   error?: boolean;
   hint?: string;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
 const Input: FC<InputProps> = ({
@@ -28,6 +30,7 @@ const Input: FC<InputProps> = ({
   onChange,
   className = "",
   autoComplete,
+  autoFocus,
   min,
   max,
   step,
@@ -35,6 +38,7 @@ const Input: FC<InputProps> = ({
   success = false,
   error = false,
   hint,
+  onKeyDown,
 }) => {
   let inputClasses = ` h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3  dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 ${className}`;
 
@@ -58,11 +62,13 @@ const Input: FC<InputProps> = ({
         value={value}
         onChange={onChange}
         autoComplete={autoComplete}
+        autoFocus={autoFocus}
         min={min}
         max={max}
         step={step}
         disabled={disabled}
         className={inputClasses}
+        onKeyDown={onKeyDown}
       />
 
       {hint && (

@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { API_ENDPOINTS } from "../../../lib/apiEndpoints";
+import { formatAmount, formatDateTime } from "../../../lib/formatters";
 import ServerDataTable, {
   ServerDataTableColumn,
 } from "../ServerDataTable";
@@ -31,7 +32,7 @@ export default function TransactionsTable() {
           toQueryKey: "dateTo",
         },
         renderCell: (row) =>
-          new Date((row as TransactionRow).createdAt).toLocaleString(),
+          formatDateTime((row as TransactionRow).createdAt),
       },
       {
         id: "from",
@@ -108,8 +109,18 @@ export default function TransactionsTable() {
           minQueryKey: "minAmount",
           maxQueryKey: "maxAmount",
         },
-        renderCell: (row) =>
-          (row as TransactionRow).amount.toLocaleString("en-US"),
+        renderCell: (row) => {
+          const tx = row as TransactionRow;
+          const formatted = formatAmount(tx.amount);
+          const display =
+            tx.type === "DEBIT" ? `Rp-${formatted}` : `Rp${formatted}`;
+          const colorClass =
+            tx.type === "DEBIT"
+              ? "text-error-600 dark:text-error-500"
+              : "text-success-600 dark:text-success-500";
+
+          return <span className={colorClass}>{display}</span>;
+        },
       },
     ],
     [],

@@ -59,7 +59,7 @@ git clone https://github.com/TailAdmin/free-react-tailwind-admin-dashboard.git
 1. Install dependencies:
 
    ```bash
-   npm install
+   bun install
    # or
    yarn install
    ```
@@ -68,7 +68,7 @@ git clone https://github.com/TailAdmin/free-react-tailwind-admin-dashboard.git
 
 2. Start the development server:
    ```bash
-   npm run dev
+   bun dev
    # or
    yarn dev
    ```
@@ -125,7 +125,7 @@ To learn more about pro version features and pricing, visit our [pricing page](h
 
 #### Next Steps
 
-- Run npm install or yarn install to update dependencies.
+- Run bun install or yarn install to update dependencies.
 - Check for any style changes or compatibility issues.
 - Refer to the Tailwind CSS v4 [Migration Guide](https://tailwindcss.com/docs/upgrade-guide) on this release. if needed.
 - This update keeps the project up to date with the latest Tailwind improvements. 🚀

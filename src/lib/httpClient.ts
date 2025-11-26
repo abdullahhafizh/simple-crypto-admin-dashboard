@@ -29,6 +29,55 @@ export class ApiError extends Error {
   }
 }
 
+export interface ApiErrorMessageOptions {
+  defaultMessage: string;
+  unauthorizedMessage?: string;
+  badRequestMessage?: string;
+  notFoundMessage?: string;
+  rateLimitMessage?: string;
+  serverErrorMessage?: string;
+}
+
+export function mapApiErrorToMessage(
+  err: unknown,
+  options: ApiErrorMessageOptions,
+): string {
+  const {
+    defaultMessage,
+    unauthorizedMessage,
+    badRequestMessage,
+    notFoundMessage,
+    rateLimitMessage,
+    serverErrorMessage,
+  } = options;
+
+  if (!(err instanceof ApiError)) {
+    return defaultMessage;
+  }
+
+  if (err.status === 400 && badRequestMessage) {
+    return badRequestMessage;
+  }
+
+  if (err.status === 401 && unauthorizedMessage) {
+    return unauthorizedMessage;
+  }
+
+  if (err.status === 404 && notFoundMessage) {
+    return notFoundMessage;
+  }
+
+  if (err.status === 429 && rateLimitMessage) {
+    return rateLimitMessage;
+  }
+
+  if (err.status >= 500 && serverErrorMessage) {
+    return serverErrorMessage;
+  }
+
+  return defaultMessage;
+}
+
 let unauthorizedHandler: (() => void) | null = null;
 
 export function registerUnauthorizedHandler(handler: (() => void) | null) {

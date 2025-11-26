@@ -8,7 +8,7 @@ export default function Transactions() {
       metaDescription="List of wallet transactions for the Insignia admin dashboard."
       pageTitle="Transactions"
       showBreadcrumb
-      useCard
+      useCard={false}
     >
       <TransactionsTable />
     </AdminPageShell>

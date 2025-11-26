@@ -155,6 +155,13 @@ export default function SignUpForm() {
                     name="username"
                     autoComplete="username"
                     placeholder="Enter your username"
+                    autoFocus
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        event.currentTarget.form?.requestSubmit();
+                      }
+                    }}
                   />
                 </div>
                 {/* <!-- Password --> */}
@@ -169,6 +176,12 @@ export default function SignUpForm() {
                       id="password"
                       name="password"
                       autoComplete="new-password"
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          event.currentTarget.form?.requestSubmit();
+                        }
+                      }}
                     />
                     <span
                       onClick={() => setShowPassword(!showPassword)}
